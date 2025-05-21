@@ -22,6 +22,9 @@ async function ensureNestAppIsReady() {
     );
 
     nestAppInstance.enableCors();
+    // If you have a global prefix in your main.ts (e.g., app.setGlobalPrefix('api')),
+    // you might need to set it here as well for consistency in Vercel.
+    // Example: nestAppInstance.setGlobalPrefix('api');
 
     const config = new DocumentBuilder()
       .setTitle('NestJS Experiment API (Deployed)')
@@ -33,25 +36,27 @@ async function ensureNestAppIsReady() {
       .build();
     const document = SwaggerModule.createDocument(nestAppInstance, config);
 
-    // --- Use Custom Local CSS served from Vercel's public directory ---
+    // --- Use CDN for Swagger CSS ---
     const customOptions: SwaggerCustomOptions = {
-      // This URL points to where Vercel will serve your static CSS file
-      // from the 'public/css/custom-swagger.css' path in your project.
-      customCssUrl: 'custom-swagger.css',
-      // You can also customize other aspects:
-      // customSiteTitle: 'My Custom API Documentation',
-      // customfavIcon: '/my-favicon.ico', // If you have a favicon in public/
+      customCssUrl:
+        'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.17.14/swagger-ui.min.css',
+      // Or: 'https://unpkg.com/swagger-ui-dist@latest/swagger-ui.css'
+      // If JS assets also cause issues, you can add them here:
+      // customJs: [
+      //   'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.17.14/swagger-ui-bundle.js',
+      //   'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.17.14/swagger-ui-standalone-preset.js',
+      // ],
     };
 
     SwaggerModule.setup('api-docs', nestAppInstance, document, customOptions);
-    // --- End of Custom Local CSS Setup ---
+    // --- End of CDN Setup ---
 
     await nestAppInstance.init();
 
     expressApp = newExpressApp;
     isNestAppReady = true;
     console.log(
-      'NestJS application bootstrapped for Vercel. Swagger UI (custom local CSS) at /api-docs.',
+      'NestJS application bootstrapped and ready for Vercel, with Swagger UI (CDN CSS) at /api-docs.',
     );
   }
 }
