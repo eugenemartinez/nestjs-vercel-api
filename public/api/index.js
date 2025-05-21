@@ -1,4 +1,37 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -8,6 +41,8 @@ const app_module_1 = require("../src/app.module");
 const platform_express_1 = require("@nestjs/platform-express");
 const express_1 = __importDefault(require("express"));
 const swagger_1 = require("@nestjs/swagger");
+const fs = __importStar(require("fs"));
+const path = __importStar(require("path"));
 let expressApp;
 let isNestAppReady = false;
 async function ensureNestAppIsReady() {
@@ -25,6 +60,25 @@ async function ensureNestAppIsReady() {
             else {
                 const uiPath = swaggerUiDist.getAbsoluteFSPath();
                 console.log('[Vercel Swagger Debug] Swagger UI absolute path from swagger-ui-dist:', uiPath);
+                try {
+                    if (fs.existsSync(uiPath)) {
+                        const files = fs.readdirSync(uiPath);
+                        console.log('[Vercel Swagger Debug] Files in UI path (sample):', files.slice(0, 10));
+                        const cssFilePath = path.join(uiPath, 'swagger-ui.css');
+                        const cssFileExists = fs.existsSync(cssFilePath);
+                        console.log(`[Vercel Swagger Debug] Does swagger-ui.css exist at ${cssFilePath}? ${cssFileExists}`);
+                    }
+                    else {
+                        console.log('[Vercel Swagger Debug] UI path does not exist or fs.existsSync is false.');
+                    }
+                }
+                catch (fsError) {
+                    let errorMessage = 'Unknown FS error';
+                    if (fsError instanceof Error) {
+                        errorMessage = fsError.message;
+                    }
+                    console.error('[Vercel Swagger Debug] Error listing files in UI path:', errorMessage);
+                }
             }
         }
         catch (e) {

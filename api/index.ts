@@ -4,6 +4,8 @@ import { ExpressAdapter } from '@nestjs/platform-express';
 import express from 'express';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger'; // Import Swagger
 import { INestApplication } from '@nestjs/common'; // For typing nestAppInstance
+import * as fs from 'fs'; // Import fs at the top
+import * as path from 'path'; // Import path for joining
 
 // This will hold the initialized NestJS application instance (via its Express adapter)
 let expressApp: express.Express;
@@ -50,14 +52,33 @@ async function ensureNestAppIsReady() {
           uiPath,
         );
 
-        // Optional: Try to list a few files if 'fs' is available and path seems valid
-        // const fs = require('fs'); // If you use fs, handle its types/require too
-        // if (fs && fs.existsSync(uiPath)) {
-        //   const files = fs.readdirSync(uiPath);
-        //   console.log('[Vercel Swagger Debug] Files in UI path (sample):', files.slice(0, 5));
-        // } else if (fs) {
-        //   console.log('[Vercel Swagger Debug] UI path does not exist or fs.existsSync is false.');
-        // }
+        try {
+          if (fs.existsSync(uiPath)) {
+            const files = fs.readdirSync(uiPath);
+            console.log(
+              '[Vercel Swagger Debug] Files in UI path (sample):',
+              files.slice(0, 10), // Log more files
+            );
+            const cssFilePath = path.join(uiPath, 'swagger-ui.css');
+            const cssFileExists = fs.existsSync(cssFilePath);
+            console.log(
+              `[Vercel Swagger Debug] Does swagger-ui.css exist at ${cssFilePath}? ${cssFileExists}`,
+            );
+          } else {
+            console.log(
+              '[Vercel Swagger Debug] UI path does not exist or fs.existsSync is false.',
+            );
+          }
+        } catch (fsError: unknown) {
+          let errorMessage = 'Unknown FS error';
+          if (fsError instanceof Error) {
+            errorMessage = fsError.message;
+          }
+          console.error(
+            '[Vercel Swagger Debug] Error listing files in UI path:',
+            errorMessage,
+          );
+        }
       }
     } catch (e: unknown) {
       // Use unknown for better type safety
