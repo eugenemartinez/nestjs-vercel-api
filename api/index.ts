@@ -6,19 +6,12 @@ import {
   SwaggerModule,
   DocumentBuilder,
   SwaggerCustomOptions,
-} from '@nestjs/swagger'; // Import SwaggerCustomOptions
-import { INestApplication } from '@nestjs/common'; // For typing nestAppInstance
-import * as fs from 'fs'; // Import fs at the top
-import * as path from 'path'; // Import path for joining
+} from '@nestjs/swagger';
+import { INestApplication } from '@nestjs/common';
 
 // This will hold the initialized NestJS application instance (via its Express adapter)
 let expressApp: express.Express;
 let isNestAppReady = false;
-
-// Define a simple interface for the swagger-ui-dist module
-interface SwaggerUiDistModule {
-  getAbsoluteFSPath: () => string;
-}
 
 // This function creates and initializes the NestJS application.
 async function ensureNestAppIsReady() {
@@ -32,71 +25,6 @@ async function ensureNestAppIsReady() {
     );
 
     nestAppInstance.enableCors(); // Enable CORS if needed
-    // If you have a global prefix in your main.ts (e.g., app.setGlobalPrefix('api')),
-    // you might need to set it here as well for consistency in Vercel.
-    // Example: nestAppInstance.setGlobalPrefix('api');
-
-    // --- Add Swagger Setup for Vercel Context ---
-    try {
-      // We are using require here specifically for swagger-ui-dist as it's a common pattern
-      // for this package to get the absolute path to its assets.
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const swaggerUiDist = require('swagger-ui-dist') as SwaggerUiDistModule;
-      if (
-        !swaggerUiDist ||
-        typeof swaggerUiDist.getAbsoluteFSPath !== 'function'
-      ) {
-        console.error(
-          '[Vercel Swagger Debug] swagger-ui-dist package not found or is invalid!',
-        );
-      } else {
-        const uiPath: string = swaggerUiDist.getAbsoluteFSPath();
-        console.log(
-          '[Vercel Swagger Debug] Swagger UI absolute path from swagger-ui-dist:',
-          uiPath,
-        );
-
-        try {
-          if (fs.existsSync(uiPath)) {
-            const files = fs.readdirSync(uiPath);
-            console.log(
-              '[Vercel Swagger Debug] Files in UI path (sample):',
-              files.slice(0, 10), // Log more files
-            );
-            const cssFilePath = path.join(uiPath, 'swagger-ui.css');
-            const cssFileExists = fs.existsSync(cssFilePath);
-            console.log(
-              `[Vercel Swagger Debug] Does swagger-ui.css exist at ${cssFilePath}? ${cssFileExists}`,
-            );
-          } else {
-            console.log(
-              '[Vercel Swagger Debug] UI path does not exist or fs.existsSync is false.',
-            );
-          }
-        } catch (fsError: unknown) {
-          let errorMessage = 'Unknown FS error';
-          if (fsError instanceof Error) {
-            errorMessage = fsError.message;
-          }
-          console.error(
-            '[Vercel Swagger Debug] Error listing files in UI path:',
-            errorMessage,
-          );
-        }
-      }
-    } catch (e: unknown) {
-      // Use unknown for better type safety
-      let errorMessage = 'Unknown error';
-      if (e instanceof Error) {
-        errorMessage = e.message;
-      } else if (typeof e === 'string') {
-        errorMessage = e;
-      }
-      console.error(
-        '[Vercel Swagger Debug] Error inspecting swagger-ui-dist:',
-        errorMessage,
-      );
-    }
 
     const config = new DocumentBuilder()
       .setTitle('NestJS Experiment API (Deployed)')
@@ -108,16 +36,16 @@ async function ensureNestAppIsReady() {
       .build();
     const document = SwaggerModule.createDocument(nestAppInstance, config);
 
-    // --- Use CDN for Swagger CSS ---
+    // --- Use CDN for ALL Swagger UI Assets (CSS and JS) ---
     const customOptions: SwaggerCustomOptions = {
       customCssUrl:
-        'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.17.14/swagger-ui.min.css',
-      // Or: 'https://unpkg.com/swagger-ui-dist@latest/swagger-ui.css'
-      // If JS assets also cause issues, you can add them here:
-      // customJs: [
-      //   'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.17.14/swagger-ui-bundle.js',
-      //   'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.17.14/swagger-ui-standalone-preset.js',
-      // ],
+        'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.17.14/swagger-ui.min.css', // Or your preferred CDN/version
+      customJs: [
+        'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.17.14/swagger-ui-bundle.js',
+        'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.17.14/swagger-ui-standalone-preset.js',
+      ],
+      // customfavIcon: 'https://your-cdn.com/favicon.png', // Optional: if you want a CDN favicon
+      // customSiteTitle: 'My API Docs', // Optional
     };
 
     SwaggerModule.setup('api-docs', nestAppInstance, document, customOptions); // Pass customOptions
@@ -128,7 +56,7 @@ async function ensureNestAppIsReady() {
     expressApp = newExpressApp; // Assign the configured Express app
     isNestAppReady = true;
     console.log(
-      'NestJS application bootstrapped and ready for Vercel, with Swagger UI at /api-docs.',
+      'NestJS application bootstrapped and ready for Vercel, with Swagger UI (CDN Assets) at /api-docs.',
     );
   }
 }
