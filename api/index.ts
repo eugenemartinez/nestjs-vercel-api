@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from '../src/app.module'; // Adjust path if your app.module.ts is elsewhere
+import { AppModule } from '../public/app.module'; // Adjust path if your app.module.ts is elsewhere
 import { ExpressAdapter } from '@nestjs/platform-express';
 import express from 'express'; // Add this line for default import
 
