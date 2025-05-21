@@ -16,6 +16,27 @@ async function ensureNestAppIsReady() {
         const newExpressApp = (0, express_1.default)();
         const nestAppInstance = await core_1.NestFactory.create(app_module_1.AppModule, new platform_express_1.ExpressAdapter(newExpressApp));
         nestAppInstance.enableCors();
+        try {
+            const swaggerUiDist = require('swagger-ui-dist');
+            if (!swaggerUiDist ||
+                typeof swaggerUiDist.getAbsoluteFSPath !== 'function') {
+                console.error('[Vercel Swagger Debug] swagger-ui-dist package not found or is invalid!');
+            }
+            else {
+                const uiPath = swaggerUiDist.getAbsoluteFSPath();
+                console.log('[Vercel Swagger Debug] Swagger UI absolute path from swagger-ui-dist:', uiPath);
+            }
+        }
+        catch (e) {
+            let errorMessage = 'Unknown error';
+            if (e instanceof Error) {
+                errorMessage = e.message;
+            }
+            else if (typeof e === 'string') {
+                errorMessage = e;
+            }
+            console.error('[Vercel Swagger Debug] Error inspecting swagger-ui-dist:', errorMessage);
+        }
         const config = new swagger_1.DocumentBuilder()
             .setTitle('NestJS Experiment API (Deployed)')
             .setDescription('The NestJS Experiment API description for Vercel deployment')

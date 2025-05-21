@@ -9,6 +9,11 @@ import { INestApplication } from '@nestjs/common'; // For typing nestAppInstance
 let expressApp: express.Express;
 let isNestAppReady = false;
 
+// Define a simple interface for the swagger-ui-dist module
+interface SwaggerUiDistModule {
+  getAbsoluteFSPath: () => string;
+}
+
 // This function creates and initializes the NestJS application.
 async function ensureNestAppIsReady() {
   if (!isNestAppReady) {
@@ -26,6 +31,48 @@ async function ensureNestAppIsReady() {
     // Example: nestAppInstance.setGlobalPrefix('api');
 
     // --- Add Swagger Setup for Vercel Context ---
+    try {
+      // We are using require here specifically for swagger-ui-dist as it's a common pattern
+      // for this package to get the absolute path to its assets.
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const swaggerUiDist = require('swagger-ui-dist') as SwaggerUiDistModule;
+      if (
+        !swaggerUiDist ||
+        typeof swaggerUiDist.getAbsoluteFSPath !== 'function'
+      ) {
+        console.error(
+          '[Vercel Swagger Debug] swagger-ui-dist package not found or is invalid!',
+        );
+      } else {
+        const uiPath: string = swaggerUiDist.getAbsoluteFSPath();
+        console.log(
+          '[Vercel Swagger Debug] Swagger UI absolute path from swagger-ui-dist:',
+          uiPath,
+        );
+
+        // Optional: Try to list a few files if 'fs' is available and path seems valid
+        // const fs = require('fs'); // If you use fs, handle its types/require too
+        // if (fs && fs.existsSync(uiPath)) {
+        //   const files = fs.readdirSync(uiPath);
+        //   console.log('[Vercel Swagger Debug] Files in UI path (sample):', files.slice(0, 5));
+        // } else if (fs) {
+        //   console.log('[Vercel Swagger Debug] UI path does not exist or fs.existsSync is false.');
+        // }
+      }
+    } catch (e: unknown) {
+      // Use unknown for better type safety
+      let errorMessage = 'Unknown error';
+      if (e instanceof Error) {
+        errorMessage = e.message;
+      } else if (typeof e === 'string') {
+        errorMessage = e;
+      }
+      console.error(
+        '[Vercel Swagger Debug] Error inspecting swagger-ui-dist:',
+        errorMessage,
+      );
+    }
+
     const config = new DocumentBuilder()
       .setTitle('NestJS Experiment API (Deployed)')
       .setDescription(
