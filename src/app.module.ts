@@ -12,18 +12,22 @@ import { ConfigModule, ConfigService } from '@nestjs/config'; // Import ConfigMo
       isGlobal: true, // Make ConfigModule available globally
     }),
     TypeOrmModule.forRootAsync({
-      imports: [ConfigModule], // Import ConfigModule here as well
+      imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
         type: 'postgres',
         host: configService.get<string>('DB_HOST'),
-        port: parseInt(configService.get<string>('DB_PORT', '5432'), 10), // Provide a default value, e.g., '5432'
+        port: parseInt(configService.get<string>('DB_PORT', '5432'), 10),
         username: configService.get<string>('DB_USERNAME'),
         password: configService.get<string>('DB_PASSWORD'),
         database: configService.get<string>('DB_DATABASE'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
-        synchronize: process.env.NODE_ENV !== 'production', // true for dev, false for prod
+        synchronize: process.env.NODE_ENV !== 'production',
+        ssl:
+          process.env.NODE_ENV === 'production'
+            ? { rejectUnauthorized: false }
+            : false, // Add this line for SSL
       }),
-      inject: [ConfigService], // Inject ConfigService
+      inject: [ConfigService],
     }),
     ItemsModule,
   ],
