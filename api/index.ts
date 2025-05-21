@@ -2,7 +2,11 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from '../src/app.module';
 import { ExpressAdapter } from '@nestjs/platform-express';
 import express from 'express';
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger'; // Import Swagger
+import {
+  SwaggerModule,
+  DocumentBuilder,
+  SwaggerCustomOptions,
+} from '@nestjs/swagger'; // Import SwaggerCustomOptions
 import { INestApplication } from '@nestjs/common'; // For typing nestAppInstance
 import * as fs from 'fs'; // Import fs at the top
 import * as path from 'path'; // Import path for joining
@@ -103,8 +107,21 @@ async function ensureNestAppIsReady() {
       .addTag('items')
       .build();
     const document = SwaggerModule.createDocument(nestAppInstance, config);
-    SwaggerModule.setup('api-docs', nestAppInstance, document); // Setup Swagger on THIS instance
-    // --- End of Swagger Setup for Vercel Context ---
+
+    // --- Use CDN for Swagger CSS ---
+    const customOptions: SwaggerCustomOptions = {
+      customCssUrl:
+        'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.17.14/swagger-ui.min.css',
+      // Or: 'https://unpkg.com/swagger-ui-dist@latest/swagger-ui.css'
+      // If JS assets also cause issues, you can add them here:
+      // customJs: [
+      //   'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.17.14/swagger-ui-bundle.js',
+      //   'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.17.14/swagger-ui-standalone-preset.js',
+      // ],
+    };
+
+    SwaggerModule.setup('api-docs', nestAppInstance, document, customOptions); // Pass customOptions
+    // --- End of CDN Setup ---
 
     await nestAppInstance.init(); // Initialize the NestJS application
 
