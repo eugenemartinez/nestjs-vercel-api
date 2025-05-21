@@ -37,7 +37,7 @@ async function ensureNestAppIsReady() {
     const customOptions: SwaggerCustomOptions = {
       // This URL points to where Vercel will serve your static CSS file
       // from the 'public/css/custom-swagger.css' path in your project.
-      customCssUrl: '/css/custom-swagger.css',
+      customCssUrl: 'custom-swagger.css',
       // You can also customize other aspects:
       // customSiteTitle: 'My Custom API Documentation',
       // customfavIcon: '/my-favicon.ico', // If you have a favicon in public/
